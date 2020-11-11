@@ -49,6 +49,11 @@ assert_eq!(solution[y], 3.0);
 #[macro_use]
 extern crate log;
 
+#[cfg(test)]
+#[macro_use]
+#[cfg(test)]
+extern crate assert_float_eq;
+
 mod helpers;
 mod lu;
 mod mps;

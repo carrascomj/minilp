@@ -1,6 +1,8 @@
 use sprs::{CsVecBase, CsVecView};
 use std::ops::Deref;
 
+pub const EPS: f64 = 1e-8;
+
 pub(crate) fn resized_view<IStorage, DStorage>(
     vec: &CsVecBase<IStorage, DStorage>,
     len: usize,
@@ -61,19 +63,16 @@ pub(crate) fn assert_matrix_eq(mat: &CsMat<f64>, reference: &[Vec<f64>]) {
 
 #[cfg(test)]
 pub(crate) fn assert_slice_eq(left: &[f64], right: &[f64]) {
-    assert!(left
-        .iter()
-        .zip(right)
-        .any(|(&l, &r)| significand_f64(l) < significand_f64(r)));
+    assert!(left.iter().zip(right).all(|(&l, &r)| float_eq(l, r)));
 }
 
 #[cfg(test)]
-fn significand_f64(f: f64) -> u64 {
-    let u = f.to_bits();
-    let s = u & 0x000FFFFFFFFFFFFF;
-    if (f.to_bits() & 0x7FF0000000000000) == 0 {
-        s
+pub(crate) fn float_eq(left: f64, right: f64) -> bool {
+    if (left, right) == (f64::NEG_INFINITY, f64::NEG_INFINITY)
+        || (left, right) == (f64::INFINITY, f64::INFINITY)
+    {
+        true
     } else {
-        s + 0x0010000000000000
+        expect_float_absolute_eq!(left, right, EPS).is_ok()
     }
 }
