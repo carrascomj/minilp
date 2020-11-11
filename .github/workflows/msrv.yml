@@ -3,6 +3,7 @@ name: MSRV
 
 on:
   push:
+    # trigger on default branch but only when source code was changed
     branches: [ master ]
     paths-ignore:
       - "COPYRIGHT"
@@ -21,6 +22,7 @@ jobs:
   rustfmt:
     name: Code format and lints
     runs-on: ubuntu-latest
+    # nightly build may break clippy so change with caution
     strategy:
       matrix:
         rust:
@@ -45,6 +47,8 @@ jobs:
   test:
     name: Test Suite
     runs-on: ubuntu-latest
+    # convenient if other versions of rust were to be tested in the future
+    # just stable for now
     strategy:
       matrix:
         rust:
