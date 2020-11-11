@@ -71,8 +71,8 @@ struct NonBasicVarState {
 
 impl std::fmt::Debug for Solver {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "Solver\n")?;
-        write!(
+        writeln!(f, "Solver")?;
+        writeln!(
             f,
             "num_vars: {}, num_constraints: {}, is_primal_feasible: {}, is_dual_feasible: {}\n",
             self.num_vars,
@@ -80,26 +80,26 @@ impl std::fmt::Debug for Solver {
             self.is_primal_feasible,
             self.is_dual_feasible,
         )?;
-        write!(f, "orig_obj_coeffs:\n{:?}\n", self.orig_obj_coeffs)?;
-        write!(f, "orig_var_mins:\n{:?}\n", self.orig_var_mins)?;
-        write!(f, "orig_var_maxs:\n{:?}\n", self.orig_var_maxs)?;
-        write!(f, "orig_constraints:\n")?;
+        writeln!(f, "orig_obj_coeffs:\n{:?}", self.orig_obj_coeffs)?;
+        writeln!(f, "orig_var_mins:\n{:?}", self.orig_var_mins)?;
+        writeln!(f, "orig_var_maxs:\n{:?}", self.orig_var_maxs)?;
+        writeln!(f, "orig_constraints:")?;
         for row in self.orig_constraints.outer_iterator() {
-            write!(f, "{:?}\n", to_dense(&row))?;
+            writeln!(f, "{:?}", to_dense(&row))?;
         }
-        write!(f, "orig_rhs:\n{:?}\n", self.orig_rhs)?;
-        write!(f, "basic_vars:\n{:?}\n", self.basic_vars)?;
-        write!(f, "basic_var_vals:\n{:?}\n", self.basic_var_vals)?;
-        write!(f, "dual_edge_sq_norms:\n{:?}\n", self.dual_edge_sq_norms)?;
-        write!(f, "nb_vars:\n{:?}\n", self.nb_vars)?;
-        write!(f, "nb_var_vals:\n{:?}\n", self.nb_var_vals)?;
-        write!(f, "nb_var_obj_coeffs:\n{:?}\n", self.nb_var_obj_coeffs)?;
+        writeln!(f, "orig_rhs:\n{:?}", self.orig_rhs)?;
+        writeln!(f, "basic_vars:\n{:?}", self.basic_vars)?;
+        writeln!(f, "basic_var_vals:\n{:?}", self.basic_var_vals)?;
+        writeln!(f, "dual_edge_sq_norms:\n{:?}", self.dual_edge_sq_norms)?;
+        writeln!(f, "nb_vars:\n{:?}", self.nb_vars)?;
+        writeln!(f, "nb_var_vals:\n{:?}", self.nb_var_vals)?;
+        writeln!(f, "nb_var_obj_coeffs:\n{:?}", self.nb_var_obj_coeffs)?;
         write!(
             f,
             "primal_edge_sq_norms:\n{:?}\n",
             self.primal_edge_sq_norms
         )?;
-        write!(f, "cur_obj_val: {:?}\n", self.cur_obj_val)?;
+        writeln!(f, "cur_obj_val: {:?}", self.cur_obj_val)?;
         Ok(())
     }
 }
