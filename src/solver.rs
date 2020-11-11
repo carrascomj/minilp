@@ -1,5 +1,5 @@
 use crate::{
-    helpers::{resized_view, to_dense},
+    helpers::{resized_view, to_dense, EPS},
     lu::{lu_factorize, LUFactors, ScratchSpace},
     sparse::{ScatteredVec, SparseMat, SparseVec},
     ComparisonOp, CsVec, Error,
@@ -8,8 +8,6 @@ use crate::{
 use sprs::CompressedStorage;
 
 type CsMat = sprs::CsMatI<f64, usize>;
-
-const EPS: f64 = 1e-8;
 
 #[derive(Clone)]
 pub(crate) struct Solver {
@@ -144,7 +142,7 @@ impl Solver {
             nb_vars.push(v);
 
             // Try to choose values to achieve dual feasibility.
-            let init_val = if min == max {
+            let init_val = if (min - max).abs() < EPS {
                 // Fixed variable, the obj. coeff doesn't matter.
                 min
             } else if min.is_infinite() && max.is_infinite() {
@@ -181,8 +179,8 @@ impl Solver {
             obj_val += init_val * obj_coeffs[v];
 
             nb_var_states.push(NonBasicVarState {
-                at_min: init_val == min,
-                at_max: init_val == max,
+                at_min: (init_val - min).abs() < EPS,
+                at_max: (init_val - max).abs() < EPS,
             });
         }
 
@@ -423,8 +421,8 @@ impl Solver {
 
             let cur_val = self.nb_var_vals[col];
             self.nb_var_states[col] = NonBasicVarState {
-                at_min: cur_val == self.orig_var_mins[var],
-                at_max: cur_val == self.orig_var_maxs[var],
+                at_min: (cur_val - self.orig_var_mins[var]).abs() < EPS,
+                at_max: (cur_val - self.orig_var_maxs[var]).abs() < EPS,
             };
 
             // Shouldn't result in error, presumably problem was solvable before this variable
@@ -1036,8 +1034,10 @@ impl Solver {
                 self.basic_var_vals[r] -= pivot_info.entering_diff * coeff;
             }
             let var_state = &mut self.nb_var_states[pivot_info.col];
-            var_state.at_min = pivot_info.entering_new_val == self.orig_var_mins[entering_var];
-            var_state.at_max = pivot_info.entering_new_val == self.orig_var_maxs[entering_var];
+            var_state.at_min =
+                (pivot_info.entering_new_val - self.orig_var_mins[entering_var]).abs() < EPS;
+            var_state.at_max =
+                (pivot_info.entering_new_val - self.orig_var_maxs[entering_var]).abs() < EPS;
             return;
         }
 
@@ -1067,8 +1067,10 @@ impl Solver {
 
         self.nb_var_vals[pivot_info.col] = pivot_elem.leaving_new_val;
         let leaving_var_state = &mut self.nb_var_states[pivot_info.col];
-        leaving_var_state.at_min = pivot_elem.leaving_new_val == self.orig_var_mins[leaving_var];
-        leaving_var_state.at_max = pivot_elem.leaving_new_val == self.orig_var_maxs[leaving_var];
+        leaving_var_state.at_min =
+            (pivot_elem.leaving_new_val - self.orig_var_mins[leaving_var]).abs() < EPS;
+        leaving_var_state.at_max =
+            (pivot_elem.leaving_new_val - self.orig_var_maxs[leaving_var]).abs() < EPS;
 
         let pivot_obj = self.nb_var_obj_coeffs[pivot_info.col] / pivot_coeff;
         for (c, &coeff) in self.row_coeffs.iter() {
@@ -1386,7 +1388,7 @@ fn into_resized(vec: CsVec, len: usize) -> CsVec {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::helpers::{assert_matrix_eq, to_sparse};
+    use crate::helpers::{assert_matrix_eq, assert_slice_eq, float_eq, to_sparse};
 
     #[test]
     fn initialize() {
@@ -1407,15 +1409,15 @@ mod tests {
         assert!(!sol.is_primal_feasible);
         assert!(!sol.is_dual_feasible);
 
-        assert_eq!(&sol.orig_obj_coeffs, &[2.0, 1.0, 0.0, 0.0, 0.0, 0.0]);
+        assert_slice_eq(&sol.orig_obj_coeffs, &[2.0, 1.0, 0.0, 0.0, 0.0, 0.0]);
 
-        assert_eq!(
+        assert_slice_eq(
             &sol.orig_var_mins,
-            &[f64::NEG_INFINITY, 5.0, 0.0, 0.0, f64::NEG_INFINITY, 0.0,]
+            &[f64::NEG_INFINITY, 5.0, 0.0, 0.0, f64::NEG_INFINITY, 0.0],
         );
-        assert_eq!(
+        assert_slice_eq(
             &sol.orig_var_maxs,
-            &[0.0, f64::INFINITY, f64::INFINITY, f64::INFINITY, 0.0, 0.0]
+            &[0.0, f64::INFINITY, f64::INFINITY, f64::INFINITY, 0.0, 0.0],
         );
 
         let orig_constraints_ref = vec![
@@ -1426,18 +1428,18 @@ mod tests {
         ];
         assert_matrix_eq(&sol.orig_constraints, &orig_constraints_ref);
 
-        assert_eq!(&sol.orig_rhs, &[6.0, 8.0, 2.0, 3.0]);
+        assert_slice_eq(&sol.orig_rhs, &[6.0, 8.0, 2.0, 3.0]);
 
-        assert_eq!(&sol.basic_vars, &[2, 3, 4, 5]);
-        assert_eq!(&sol.basic_var_vals, &[1.0, -2.0, -3.0, -2.0]);
-        assert_eq!(&sol.dual_edge_sq_norms, &[1.0, 1.0, 1.0, 1.0]);
+        assert_eq!(sol.basic_vars, &[2, 3, 4, 5]);
+        assert_slice_eq(&sol.basic_var_vals, &[1.0, -2.0, -3.0, -2.0]);
+        assert_slice_eq(&sol.dual_edge_sq_norms, &[1.0, 1.0, 1.0, 1.0]);
 
-        assert_eq!(&sol.nb_vars, &[0, 1]);
-        assert_eq!(&sol.nb_var_obj_coeffs, &[-1.0, 1.0]);
-        assert_eq!(&sol.nb_var_vals, &[0.0, 5.0]);
-        assert_eq!(&sol.primal_edge_sq_norms, &[4.0, 8.0]);
+        assert_eq!(sol.nb_vars, &[0, 1]);
+        assert_slice_eq(&sol.nb_var_obj_coeffs, &[-1.0, 1.0]);
+        assert_slice_eq(&sol.nb_var_vals, &[0.0, 5.0]);
+        assert_slice_eq(&sol.primal_edge_sq_norms, &[4.0, 8.0]);
 
-        assert_eq!(sol.cur_obj_val, 0.0);
+        assert!(float_eq(sol.cur_obj_val, 0.0));
     }
 
     #[test]
@@ -1458,11 +1460,11 @@ mod tests {
         assert!(sol.is_dual_feasible);
 
         assert_eq!(&sol.basic_vars, &[0, 1]);
-        assert_eq!(&sol.basic_var_vals, &[12.0, 8.0]);
+        assert_slice_eq(&sol.basic_var_vals, &[12.0, 8.0]);
         assert_eq!(&sol.nb_vars, &[2, 3]);
-        assert_eq!(&sol.nb_var_vals, &[0.0, 0.0]);
-        assert_eq!(&sol.nb_var_obj_coeffs, &[3.2, 0.2]);
-        assert_eq!(sol.cur_obj_val, -68.0);
+        assert_slice_eq(&sol.nb_var_vals, &[0.0, 0.0]);
+        assert_slice_eq(&sol.nb_var_obj_coeffs, &[3.2, 0.2]);
+        assert!(float_eq(sol.cur_obj_val, -68.0));
 
         let infeasible = Solver::try_new(
             &[1.0, 1.0],
