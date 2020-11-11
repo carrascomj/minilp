@@ -615,7 +615,6 @@ mod tests {
 
         {
             let sol = orig_sol
-                
                 .add_constraint(&[(v1, -1.0), (v2, 1.0)], ComparisonOp::Ge, 3.0)
                 .unwrap();
 
