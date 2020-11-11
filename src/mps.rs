@@ -48,7 +48,7 @@ impl MpsFile {
         };
 
         let problem_name = {
-            lines.to_next()?;
+            lines.next_mut()?;
             let mut tokens = Tokens::new(&lines);
             if tokens.next()? != "NAME" {
                 return Err(lines.err("expected NAME section"));
@@ -68,13 +68,13 @@ impl MpsFile {
         let mut constraints = vec![];
         let mut constr_name2idx = HashMap::new();
         {
-            lines.to_next()?;
+            lines.next_mut()?;
             if lines.cur != "ROWS" {
                 return Err(lines.err("expected ROWS section"));
             }
 
             loop {
-                lines.to_next()?;
+                lines.next_mut()?;
                 if !lines.cur.starts_with(' ') {
                     break;
                 }
@@ -137,7 +137,7 @@ impl MpsFile {
             let mut cur_name = String::new();
             let mut cur_def = VariableDef::default();
             loop {
-                lines.to_next()?;
+                lines.next_mut()?;
                 if !lines.cur.starts_with(' ') {
                     break;
                 }
@@ -182,7 +182,7 @@ impl MpsFile {
 
             let mut cur_vec_name = None;
             loop {
-                lines.to_next()?;
+                lines.next_mut()?;
                 if !lines.cur.starts_with(' ') {
                     break;
                 }
@@ -212,7 +212,7 @@ impl MpsFile {
         if lines.cur == "RANGES" {
             let mut cur_vec_name = None;
             loop {
-                lines.to_next()?;
+                lines.next_mut()?;
                 if !lines.cur.starts_with(' ') {
                     break;
                 }
@@ -240,7 +240,7 @@ impl MpsFile {
         if lines.cur == "BOUNDS" {
             let mut cur_vec_name = None;
             loop {
-                lines.to_next()?;
+                lines.next_mut()?;
                 if !lines.cur.starts_with(' ') {
                     break;
                 }
@@ -337,7 +337,7 @@ struct Lines<R: io::BufRead> {
 }
 
 impl<R: io::BufRead> Lines<R> {
-    fn to_next(&mut self) -> io::Result<()> {
+    fn next_mut(&mut self) -> io::Result<()> {
         loop {
             self.idx += 1;
             self.cur.clear();

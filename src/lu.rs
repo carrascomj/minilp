@@ -57,8 +57,8 @@ impl LUFactors {
         scratch.dense_rhs.resize(rhs.len(), 0.0);
 
         if let Some(row_perm) = &self.row_perm {
-            for i in 0..rhs.len() {
-                scratch.dense_rhs[row_perm.orig2new[i]] = rhs[i];
+            for (i, &each_right) in rhs.iter().enumerate() {
+                scratch.dense_rhs[row_perm.orig2new[i]] = each_right;
             }
         } else {
             scratch.dense_rhs.copy_from_slice(rhs);
@@ -72,7 +72,7 @@ impl LUFactors {
                 rhs[col_perm.new2orig[i]] = scratch.dense_rhs[i];
             }
         } else {
-            rhs.copy_from_slice(&mut scratch.dense_rhs);
+            rhs.copy_from_slice(&scratch.dense_rhs);
         }
     }
 
@@ -253,12 +253,10 @@ pub fn lu_factorize<'a>(
             }
 
             let new_r = orig2new_row[orig_r];
-            if new_r < i_col {
-                upper.push(new_r, val);
-            } else if new_r == i_col {
-                upper_diag.push(pivot_val);
-            } else {
-                lower.push(orig_r, val / pivot_val);
+            match new_r.cmp(&i_col) {
+                std::cmp::Ordering::Less => upper.push(new_r, val),
+                std::cmp::Ordering::Equal => upper_diag.push(pivot_val),
+                std::cmp::Ordering::Greater => lower.push(orig_r, val / pivot_val),
             }
         }
 
@@ -475,7 +473,7 @@ mod tests {
         }
         mat.to_csc()
     }
-    
+
     #[test]
     fn lu_simple() {
         let mat = mat_from_triplets(

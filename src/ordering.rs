@@ -103,10 +103,10 @@ pub fn order_colamd<'a>(
             rows[i].end += prev_end;
         }
 
-        for c in 0..size {
-            for &r in cols[c].elems(&row_storage) {
+        for (i, col) in cols.iter().enumerate().take(size) {
+            for &r in col.elems(&row_storage) {
                 let row = &mut rows[r];
-                col_storage[row.begin] = c;
+                col_storage[row.begin] = i;
                 row.begin += 1;
             }
         }

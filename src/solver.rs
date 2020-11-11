@@ -659,7 +659,7 @@ impl Solver {
         let mut num_vars = 0;
         let mut infeasibility = 0.0;
         for (&obj_coeff, var_state) in self.nb_var_obj_coeffs.iter().zip(&self.nb_var_states) {
-            if !(var_state.at_min && obj_coeff > -EPS) && !(var_state.at_max && obj_coeff < EPS) {
+            if !(var_state.at_min && obj_coeff > -EPS || var_state.at_max && obj_coeff < EPS) {
                 num_vars += 1;
                 infeasibility += obj_coeff.abs();
             }
