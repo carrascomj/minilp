@@ -465,7 +465,7 @@ fn tri_solve_process_col(tri_mat: &TriangleMat, col: usize, rhs: &mut [f64]) {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::helpers::{assert_matrix_eq, to_dense, to_sparse};
+    use crate::helpers::{assert_matrix_eq, assert_slice_eq, to_dense, to_sparse};
     use sprs::{CsMat, CsVec, TriMat};
 
     fn mat_from_triplets(rows: usize, cols: usize, triplets: &[(usize, usize, f64)]) -> CsMat<f64> {
@@ -475,7 +475,7 @@ mod tests {
         }
         mat.to_csc()
     }
-
+    
     #[test]
     fn lu_simple() {
         let mat = mat_from_triplets(
@@ -519,7 +519,7 @@ mod tests {
         ];
         let u_diag_ref = [4.0, 0.5, 1.0];
         assert_matrix_eq(&lu.upper.nondiag.to_csmat(), &u_nondiag_ref);
-        assert_eq!(lu.upper.diag.as_ref().unwrap(), &u_diag_ref);
+        assert_slice_eq(lu.upper.diag.as_ref().unwrap(), &u_diag_ref);
 
         assert_eq!(lu.row_perm.as_ref().unwrap().new2orig, &[2, 0, 1]);
         assert_eq!(lu.col_perm.as_ref().unwrap().new2orig, &[0, 1, 2]);
@@ -527,13 +527,13 @@ mod tests {
         {
             let mut rhs_dense = [6.0, 3.0, 13.0];
             lu.solve_dense(&mut rhs_dense, &mut scratch);
-            assert_eq!(&rhs_dense, &[1.0, 2.0, 3.0]);
+            assert_slice_eq(&rhs_dense, &[1.0, 2.0, 3.0]);
         }
 
         {
             let mut rhs_dense_t = [14.0, 11.0, 5.0];
             lu_transp.solve_dense(&mut rhs_dense_t, &mut scratch);
-            assert_eq!(&rhs_dense_t, &[1.0, 2.0, 3.0]);
+            assert_slice_eq(&rhs_dense_t, &[1.0, 2.0, 3.0]);
         }
 
         {

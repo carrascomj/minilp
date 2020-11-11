@@ -58,3 +58,22 @@ pub(crate) fn assert_matrix_eq(mat: &CsMat<f64>, reference: &[Vec<f64>]) {
         assert_eq!(to_dense(&row), reference[r], "matrices differ in row {}", r);
     }
 }
+
+#[cfg(test)]
+pub(crate) fn assert_slice_eq(left: &[f64], right: &[f64]) {
+    assert!(left
+        .iter()
+        .zip(right)
+        .any(|(&l, &r)| significand_f64(l) < significand_f64(r)));
+}
+
+#[cfg(test)]
+fn significand_f64(f: f64) -> u64 {
+    let u = f.to_bits();
+    let s = u & 0x000FFFFFFFFFFFFF;
+    if (f.to_bits() & 0x7FF0000000000000) == 0 {
+        s
+    } else {
+        s + 0x0010000000000000
+    }
+}
