@@ -563,7 +563,7 @@ mod tests {
         }
 
         {
-            let mut sol = orig_sol.clone().fix_var(v2, 2.5).unwrap();
+            let mut sol = orig_sol.fix_var(v2, 2.5).unwrap();
             assert_eq!(sol[v1], 1.5);
             assert_eq!(sol[v2], 2.5);
             assert_eq!(sol.objective(), 6.5);
@@ -610,7 +610,7 @@ mod tests {
 
         {
             let sol = orig_sol
-                .clone()
+                
                 .add_constraint(&[(v1, -1.0), (v2, 1.0)], ComparisonOp::Ge, 3.0)
                 .unwrap();
 

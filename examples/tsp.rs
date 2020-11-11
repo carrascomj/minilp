@@ -65,7 +65,7 @@ impl Problem {
             }
 
             let mut keyword = line[0].clone();
-            if keyword.ends_with(":") {
+            if keyword.ends_with(':') {
                 keyword.pop();
             }
 
@@ -533,7 +533,7 @@ fn find_min_cut(size: usize, weights: &mut [f64]) -> (f64, Vec<bool>) {
     }
 
     assert!(best_cut_weight.is_finite());
-    return (best_cut_weight, best_cut);
+    (best_cut_weight, best_cut)
 }
 
 #[cfg(test)]
