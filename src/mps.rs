@@ -390,13 +390,15 @@ impl<'a> Tokens<'a> {
 }
 
 fn parse_f64(input: &str, line_idx: usize) -> io::Result<f64> {
-    input.parse().map_err(|_| io::Error::new(
+    input.parse().map_err(|_| {
+        io::Error::new(
             io::ErrorKind::InvalidData,
             format!(
                 "line {}: couldn't parse float from string: `{}`",
                 line_idx, input
             ),
-        ))
+        )
+    })
 }
 
 struct KVPairs<'a> {
